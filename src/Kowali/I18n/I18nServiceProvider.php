@@ -35,7 +35,6 @@ class I18nServiceProvider extends ServiceProvider {
         $this->app->bind('kowali.locale', function($app){
             return new LocaleManager(
                 $app->config->get('app.locales'),
-                $app['cookie'],
                 $app['request'],
                 $app);
         });

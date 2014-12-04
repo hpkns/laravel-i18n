@@ -14,11 +14,6 @@ class LocaleManager {
     protected $availableLocales = [];
 
     /**
-     * @var \Illuminate\Cookie\CookieJar
-     */
-    protected $cookie;
-
-    /**
      * @var \Illuminate\Http\Request
      */
     protected $request;
@@ -32,15 +27,13 @@ class LocaleManager {
      * Initialize the instance.
      *
      * @param  array                              $locales
-     * @param  \Illuminate\Cookie\CookieJar       $cookie
      * @param  \Illuminate\Http\Request           $request
      * @param  \Illuminate\Foundation\Application $app
      * @return void
      */
-    public function __construct($locales, $cookie = null, Request $request = null, Application $app = null)
+    public function __construct($locales, Request $request = null, Application $app = null)
     {
         $this->availableLocales = $locales;
-        $this->cookie = $cookie ?: \App::make('cookie');
         $this->request = $request ?: \App::make('request');
         $this->app = $app ?: \App::make('app');
     }
@@ -53,13 +46,25 @@ class LocaleManager {
     public function guess()
     {
         // Is a locale cookies set? If so, let's try to use it
-        if($this->cookie->has('locale') && $this->isAvailable($this->cookie->get('locale')))
+        if(($locale = $this->getCookie('locale')) && $this->isAvailable($locale))
         {
-            return $this->cookie->get('locale');
+            return $locale;
         }
 
         // No cookie? Let's use the headers instead, then
-        return $this->pickFromAccepted($this->availableLocales);
+        return $this->pickFromAccepted($this->availableLocales, $this->getHeaderAcceptedLocales());
+    }
+
+    /**
+     * Extract the cookie value from the request.
+     *
+     * @param  string $key
+     * @param  mixed  $default
+     * @return mixed
+     */
+    public function getCookie($key, $default = null)
+    {
+        return $this->request->cookie($key, $default);
     }
 
     /**
