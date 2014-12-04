@@ -1,0 +1,24 @@
+{
+    "name": "kowali/i18n",
+    "description": "Kowali i18n package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Thomas Hupkens",
+            "email": "thomas@hupkens.be"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "illuminate/support": "4.2.*"
+    },
+    "require-dev": {
+        "mockery/mockery": "0.9.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Kowali\\I18n\\" : "src/Kowali/I18n/"
+        }
+    },
+    "minimum-stability": "stable"
+}

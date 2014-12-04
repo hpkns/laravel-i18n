@@ -1,0 +1,140 @@
+<?php
+
+use \Mockery as m;
+use Kowali\I18n\LocaleManager as Manager;
+
+class LocaleManagerTests extends PHPUNIT_Framework_TestCase {
+
+
+    public function tearDown()
+    {
+        m::close();
+    }
+
+    public function getMocks()
+    {
+        return [
+            'cookie'    => m::mock('\Illuminate\Cookie\CookieJar'),
+            'request'   => m::mock('\Illuminate\Http\Request'),
+            'app'       => m::mock('\Illuminate\Foundation\Application')
+        ];
+    }
+
+    public function testIsInstanciable()
+    {
+        extract($this->getMocks());
+
+        $this->assertInstanceOf('\Kowali\I18n\LocaleManager', new Manager([], $cookie, $request, $app));
+    }
+
+    public function testGuessMethod()
+    {
+        extract($this->getMocks());
+        $locales = ['fr'];
+        $manager = m::mock('\Kowali\I18n\LocaleManager[pickFromAccepted, isAvailable]', [$locales, $cookie, $request, $app]);
+
+        $cookie->shouldReceive('has')
+            ->with('locale')
+            ->once()
+            ->andReturn(false);
+
+        $manager->shouldReceive('pickFromAccepted')
+            ->with($locales)
+            ->once()
+            ->andReturn($locales[0]);
+
+        $this->assertEquals($locales[0], $manager->guess());
+
+
+        $cookie->shouldReceive('has')
+            ->with('locale')
+            ->once()
+            ->andReturn(true)
+            ->shouldReceive('get')
+            ->with('locale')
+            ->twice()
+            ->andReturn('fr');
+
+        $manager->shouldReceive('isAvailable')
+            ->with('fr')
+            ->once()
+            ->andReturn(true);
+
+        $this->assertEquals($locales[0], $manager->guess());
+    }
+
+    public function testGetHeaderAcceptedLocalesMethod()
+    {
+        extract($this->getMocks());
+        $manager = new Manager([], $cookie, $request, $app);
+        $accepted = 'some value';
+
+        $request->shouldReceive('server')
+            ->with('HTTP_ACCEPT_LANGUAGE')
+            ->once()
+            ->andReturn($accepted);
+
+        $this->assertEquals($manager->getHeaderAcceptedLocales(), (array)$accepted);
+    }
+
+    public function testIsAvailableMethod()
+    {
+        extract($this->getMocks());
+        $manager = new Manager(['fr','en'], $cookie, $request, $app);
+
+        $this->assertTrue($manager->isAvailable('fr'));
+        $this->assertTrue($manager->isAvailable('en'));
+        $this->assertfalse($manager->isAvailable('ru'));
+    }
+
+    public function testSetMethod()
+    {
+        extract($this->getMocks());
+        $manager = new Manager(['en'], $cookie, $request, $app);
+
+        $app->shouldReceive('setLocale')
+            ->with('en')
+            ->once();
+
+        $this->assertEquals($manager->set('en'), 'en');
+        $this->assertFalse($manager->set('ru'));
+    }
+
+    public function testDetectFromHeaderMethod()
+    {
+        extract($this->getMocks());
+        $manager = new Manager(['en'], $cookie, $request, $app);
+
+        $available = ['fr','en','nl'];
+
+        $accepted = explode(',', 'fr,en;q=0.9,de;q=0.5');
+        $this->assertEquals($manager->pickFromAccepted($available, $accepted), 'fr');
+
+        $accepted = explode(',', 'po;q=0.9,nl;q=0.5');
+        $this->assertEquals($manager->pickFromAccepted($available, $accepted), 'nl');
+
+        $accepted = explode(',', 'en;q=0.9,de;q=0.5');
+        $this->assertEquals($manager->pickFromAccepted($available, $accepted), 'en');
+
+        $accepted = explode(',', 'ru,po;=0.9,da;=0.2');
+        $this->assertEquals($manager->pickFromAccepted($available, $accepted), 'fr');
+    }
+
+    public function testSetGuessedMethod()
+    {
+        extract($this->getMocks());
+        $locale = 'fr';
+        $locales = [$locale];
+        $manager = m::mock('\Kowali\I18n\LocaleManager[guess]', [$locales, $cookie, $request, $app]);
+
+        $manager->shouldReceive('guess')
+            ->once()
+            ->andReturn($locale);
+
+        $app->shouldReceive('setLocale')
+            ->with($locale)
+            ->once();
+
+        $this->assertEquals($manager->setGuessed(), 'fr');
+    }
+}

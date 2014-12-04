@@ -1,0 +1,14 @@
+# Laravel specific
+/bootstrap/compiled.php
+/vendor
+composer.phar
+composer.lock
+.env.*.php
+*.env.php
+.env.php
+workbench
+
+# Mac OS
+Thumbs.db
+.DS_Store
+._*
