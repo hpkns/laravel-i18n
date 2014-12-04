@@ -19,6 +19,13 @@ class LocaleManager {
     protected $request;
 
     /**
+     * The name of the cookie key for storing the locale.
+     *
+     * @var string
+     */
+    protected $cookieKey;
+
+    /**
      * @var \Illuminate\Foundation\Application
      */
     protected $app;
@@ -31,9 +38,10 @@ class LocaleManager {
      * @param  \Illuminate\Foundation\Application $app
      * @return void
      */
-    public function __construct($locales, Request $request = null, Application $app = null)
+    public function __construct($locales, $cookie_key = 'locale', Request $request = null, Application $app = null)
     {
         $this->availableLocales = $locales;
+        $this->cookieKey = $cookie_key;
         $this->request = $request ?: \App::make('request');
         $this->app = $app ?: \App::make('app');
     }
@@ -46,7 +54,8 @@ class LocaleManager {
     public function guess()
     {
         // Is a locale cookies set? If so, let's try to use it
-        if(($locale = $this->getCookie('locale')) && $this->isAvailable($locale))
+        //dd( \Cookie::get('locale'));
+        if(($locale = $this->getCookie($this->cookieKey)) && $this->isAvailable($locale))
         {
             return $locale;
         }
@@ -88,6 +97,17 @@ class LocaleManager {
         return in_array($locale, $this->availableLocales);
     }
 
+
+    /**
+     * Return a list of available locales.
+     *
+     * @return array
+     */
+    public function available()
+    {
+        return $this->availableLocales;
+    }
+
     /**
      * Detects the user agent's prefered locale
      *
@@ -125,11 +145,17 @@ class LocaleManager {
      * @param  string $locale
      * @return string
      */
-    public function set($locale)
+    public function set($locale, $save = false)
     {
         if(in_array($locale, $this->availableLocales))
         {
             $this->app->setLocale($locale);
+
+            if($save)
+            {
+                $this->saveLocale($locale);
+            }
+
             return $locale;
         }
 
@@ -137,12 +163,46 @@ class LocaleManager {
     }
 
     /**
+     * Save the locale
+     *
+     * @return void
+     */
+    public function saveLocale($locale)
+    {
+        if($locale != $this->getCookie($this->cookieKey))
+        {
+            \Log::info('Saving cookie');
+            \Cookie::queue($this->cookieKey, $locale, 144000);
+        }
+    }
+
+    /**
+     * Return the current locale.
+     *
+     * @return string
+     */
+    public function get()
+    {
+        return $this->app->getLocale();
+    }
+
+    /**
      * Guess the locale and set it
      *
      * @return string
      */
-    public function setGuessed()
+    public function setGuessed($save = false)
     {
-        return $this->set($this->guess());
+        return $this->set($this->guess(), $save);
+    }
+
+    /**
+     * Return the cookie key.
+     *
+     * @return string
+     */
+    public function getCookieKey()
+    {
+        return $this->cookieKey;
     }
 }

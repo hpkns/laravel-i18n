@@ -15,7 +15,8 @@ class LocaleManagerTests extends PHPUNIT_Framework_TestCase {
     {
         return [
             'request'   => m::mock('\Illuminate\Http\Request'),
-            'app'       => m::mock('\Illuminate\Foundation\Application')
+            'app'       => m::mock('\Illuminate\Foundation\Application'),
+            'key'       => 'locale',
         ];
     }
 
@@ -23,14 +24,14 @@ class LocaleManagerTests extends PHPUNIT_Framework_TestCase {
     {
         extract($this->getMocks());
 
-        $this->assertInstanceOf('\Kowali\I18n\LocaleManager', new Manager([], $request, $app));
+        $this->assertInstanceOf('\Kowali\I18n\LocaleManager', new Manager([], $key, $request, $app));
     }
 
     public function testGuessMethod()
     {
         extract($this->getMocks());
         $locales = ['fr'];
-        $manager = m::mock('\Kowali\I18n\LocaleManager[pickFromAccepted, getCookie, getHeaderAcceptedLocales, isAvailable]', [$locales, $request, $app]);
+        $manager = m::mock('\Kowali\I18n\LocaleManager[pickFromAccepted, getCookie, getHeaderAcceptedLocales, isAvailable]', [$locales, $key, $request, $app]);
 
         $manager->shouldReceive('getCookie')
             ->with('locale')
@@ -64,7 +65,7 @@ class LocaleManagerTests extends PHPUNIT_Framework_TestCase {
     public function testGetHeaderAcceptedLocalesMethod()
     {
         extract($this->getMocks());
-        $manager = new Manager([], $request, $app);
+        $manager = new Manager([], $key, $request, $app);
         $accepted = 'some value';
 
         $request->shouldReceive('server')
@@ -78,7 +79,7 @@ class LocaleManagerTests extends PHPUNIT_Framework_TestCase {
     public function testIsAvailableMethod()
     {
         extract($this->getMocks());
-        $manager = new Manager(['fr','en'], $request, $app);
+        $manager = new Manager(['fr','en'], $key, $request, $app);
 
         $this->assertTrue($manager->isAvailable('fr'));
         $this->assertTrue($manager->isAvailable('en'));
@@ -88,7 +89,7 @@ class LocaleManagerTests extends PHPUNIT_Framework_TestCase {
     public function testSetMethod()
     {
         extract($this->getMocks());
-        $manager = new Manager(['en'], $request, $app);
+        $manager = new Manager(['en'], $key, $request, $app);
 
         $app->shouldReceive('setLocale')
             ->with('en')
@@ -101,7 +102,7 @@ class LocaleManagerTests extends PHPUNIT_Framework_TestCase {
     public function testDetectFromHeaderMethod()
     {
         extract($this->getMocks());
-        $manager = new Manager(['en'], $request, $app);
+        $manager = new Manager(['en'], $key, $request, $app);
 
         $available = ['fr','en','nl'];
 
@@ -123,7 +124,7 @@ class LocaleManagerTests extends PHPUNIT_Framework_TestCase {
         extract($this->getMocks());
         $locale = 'fr';
         $locales = [$locale];
-        $manager = m::mock('\Kowali\I18n\LocaleManager[guess]', [$locales, $request, $app]);
+        $manager = m::mock('\Kowali\I18n\LocaleManager[guess]', [$locales, $key, $request, $app]);
 
         $manager->shouldReceive('guess')
             ->once()

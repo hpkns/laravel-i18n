@@ -18,7 +18,8 @@
     "autoload": {
         "psr-4": {
             "Kowali\\I18n\\" : "src/Kowali/I18n/"
-        }
+        },
+        "files": ["src/Kowali/I18n/helpers.php"]
     },
     "minimum-stability": "stable"
 }

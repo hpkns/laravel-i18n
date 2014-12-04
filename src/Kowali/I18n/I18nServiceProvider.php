@@ -30,14 +30,15 @@ class I18nServiceProvider extends ServiceProvider {
      */
     public function register (){
 
-        $this->app->bind('kowali.parsers.markdown', "\Kowali\Formatting\Parsers\MarkdownParser");
-
         $this->app->bind('kowali.locale', function($app){
-            return new LocaleManager(
-                $app->config->get('app.locales'),
-                $app['request'],
-                $app);
+
+            $locales = $app->config->get('app.locales', (array)$app->config->get('app.locale'));
+            $cookie_key = $app->config->get('app.locale-cookie-key', 'locale');
+
+            return new LocaleManager($locales, $cookie_key, $app['request'], $app);
+
         });
+
     }
 
     /**
