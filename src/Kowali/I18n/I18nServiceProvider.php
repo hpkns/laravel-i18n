@@ -1,4 +1,4 @@
-<?php namespace Kowali\Formatting;
+<?php namespace Kowali\I18n;
 
 use Illuminate\Support\ServiceProvider;
 
