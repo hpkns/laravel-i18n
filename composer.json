@@ -10,16 +10,16 @@
     ],
     "require": {
         "php": ">=5.4.0",
-        "illuminate/support": "4.2.*"
-    },
-    "require-dev": {
-        "mockery/mockery": "0.9.*"
+        "illuminate/support": "~5.0",
+        "kowali/support": "~2.0"
     },
     "autoload": {
         "psr-4": {
-            "Kowali\\I18n\\" : "src/Kowali/I18n/"
+            "Kowali\\I18n\\" : ""
         },
-        "files": ["src/Kowali/I18n/helpers.php"]
+        "files": [
+           "helpers.php" 
+        ]
     },
-    "minimum-stability": "stable"
+    "minimum-stability": "dev"
 }
