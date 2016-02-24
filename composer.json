@@ -1,6 +1,6 @@
 {
-    "name": "kowali/i18n",
-    "description": "Kowali i18n package",
+    "name": "hpkns/laravel-i18n",
+    "description": "Simple i18n package to help Laravel track user preferences",
     "license": "MIT",
     "authors": [
         {
@@ -9,13 +9,16 @@
         }
     ],
     "require": {
-        "php": ">=5.4.0",
-        "illuminate/support": "~5.0",
-        "kowali/support": "dev-master"
+        "php": ">=5.5.9",
+        "illuminate/support": "~5.2"
+    },
+    "require-dev": {
+        "mockery/mockery": "~0.9",
+        "phpunit/phpunit": "~4.0"
     },
     "autoload": {
         "psr-4": {
-            "Kowali\\I18n\\" : ""
+            "Hpkns\\I18n\\" : "./"
         },
         "files": [
            "helpers.php" 

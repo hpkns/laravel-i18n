@@ -1,22 +1,19 @@
-<?php namespace Kowali\I18n;
+<?php
 
-use Illuminate\Cookie\CookieJar;
+namespace Hpkns\I18n;
+
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
 
-class LocaleManager {
+class LocaleManager
+{
 
     /**
-     * A list of availabel locales.
+     * A list of available locales.
      *
      * @var array
      */
-    protected $availableLocales = [];
-
-    /**
-     * @var \Illuminate\Http\Request
-     */
-    protected $request;
+    protected $available;
 
     /**
      * The name of the cookie key for storing the locale.
@@ -26,77 +23,70 @@ class LocaleManager {
     protected $cookieKey;
 
     /**
-     * @var \Illuminate\Foundation\Application
+     * A reference to the request binding
+     *
+     * @var \Illuminate\Http\Request
      */
-    protected $app;
+    protected $request;
 
     /**
      * Initialize the instance.
      *
-     * @param  array                              $locales
-     * @param  \Illuminate\Http\Request           $request
-     * @param  \Illuminate\Foundation\Application $app
-     * @return void
+     * @param array  $locales
+     * @param string $cookie_key
      */
-    public function __construct($locales, $cookie_key = 'locale', Request $request = null, Application $app = null)
+    public function __construct(array $available = [], $cookie_key = 'locale', $request = null)
     {
-        $this->availableLocales = $locales;
+        $this->available = $available;
         $this->cookieKey = $cookie_key;
-        $this->request = $request ?: \App::make('request');
-        $this->app = $app ?: \App::make('app');
+        $this->request   = $request ?: app('request');
     }
 
     /**
      * Detect the user's desired locale.
      *
-     * @return string
+     * @param  bool $must_return_value
+     * @return string|null
      */
-    public function guess()
+    public function guess($must_return_value = false)
     {
-        // Is a locale cookies set? If so, let's try to use it
-        //dd( \Cookie::get('locale'));
-        if(($locale = $this->getCookie($this->cookieKey)) && $this->isAvailable($locale))
-        {
+        $locale = $this->request->cookie($this->cookieKey);
+
+        if ($locale && $this->isAvailable($locale)) {
             return $locale;
         }
 
-        // No cookie? Let's use the headers instead, then
-        return $this->pickFromAccepted($this->availableLocales, $this->getHeaderAcceptedLocales());
+        return $this->pickFromAccepted($this->available, $this->getHeaderAcceptedLocales(), $must_return_value);
     }
 
     /**
-     * Extract the cookie value from the request.
+     * Return a list of accept locale from the HTTP.
      *
-     * @param  string $key
-     * @param  mixed  $default
-     * @return mixed
-     */
-    public function getCookie($key, $default = null)
-    {
-        return $this->request->cookie($key, $default);
-    }
-
-    /**
-     * Retunr a list of accept locale from header.
-     *
+     * @throws \Hpkns\I18n\Exceptions\EmptyAcceptHeader
      * @return array
      */
     public function getHeaderAcceptedLocales()
     {
-        return explode(',', $this->request->server('HTTP_ACCEPT_LANGUAGE'));
+        $accepted = $this->request->server('HTTP_ACCEPT_LANGUAGE');
+
+        if (empty($accepted)) {
+            throw new Exceptions\EmptyAcceptHeader('HTTP Accept header empty or not found');
+        }
+
+        return explode(',', $accepted);
     }
 
     /**
-     * Return wether a locale is available
+     * Return wether a locale is available.
      *
-     * @param  string $locale
+     * @param string $locale
+     *
      * @return bool
      */
     public function isAvailable($locale)
     {
-        return in_array($locale, $this->availableLocales);
+        return in_array($locale, $this->available);
     }
-
 
     /**
      * Return a list of available locales.
@@ -105,75 +95,79 @@ class LocaleManager {
      */
     public function available()
     {
-        return $this->availableLocales;
+        return $this->available;
     }
 
     /**
-     * Detects the user agent's prefered locale
+     * Detects the user agent's prefered locale.
      *
      * @param  array $available
-     * @return mixed
+     * @param  array $accept
+     * @param  bool  $must_return_value
+     * @return string|null
      */
-    public function pickFromAccepted(array $available, array $accept = [])
+    public function pickFromAccepted(array $available, array $accept = [], $must_return_value = false)
     {
-        if(empty($available))
-        {
-            throw new Exceptions\NoAvailableLocalesSetException;
+        if (empty($available)) {
+            throw new Exceptions\NoAvailableLocalesSetException();
         }
-        $locale = $available[0];
+
+        $locale = null;
         $index = 0;
 
-        foreach($accept as $hl)
-        {
+        foreach ($accept as $hl) {
             $details = explode(';q=', $hl);
             // localeauges without a 'q' value have a priority of 1
-            if(count($details) == 1)
+            if (count($details) == 1) {
                 $details[1] = 1;
+            }
 
-            if(in_array($details[0], $available) && $details[1] > $index)
-            {
+            if (in_array($details[0], $available) && $details[1] > $index) {
                 $locale = $details[0];
                 $index = $details[1];
             }
         }
-        return $locale;
+
+        return ($locale == null && $must_return_value) ? $available[0] : $locale;
     }
 
     /**
-     * Set the application locale
+     * Set the application locale.
      *
      * @param  string $locale
+     * @param  bool   $save
      * @return string
      */
     public function set($locale, $save = false)
     {
-        if(in_array($locale, $this->availableLocales))
-        {
-            $this->app->setLocale($locale);
-
-            if($save)
-            {
-                $this->saveLocale($locale);
-            }
-
-            return $locale;
+        if (! $this->isAvailable($locale)) {
+            return false;
         }
 
-        return false;
+        app()->setLocale($locale);
+
+        if ($save) {
+            $this->saveLocale($locale);
+        }
+
+        return $locale;
     }
 
     /**
-     * Save the locale
+     * Save the locale.
      *
+     * @param  string $locale
      * @return void
      */
     public function saveLocale($locale)
     {
-        if($locale != $this->getCookie($this->cookieKey))
-        {
-            \Log::info('Saving cookie');
-            \Cookie::queue($this->cookieKey, $locale, 144000);
+        if (! $this->isAvailable($locale)) {
+            return false;
         }
+
+        app('cookie')->queue($this->cookieKey, $locale, 144000);
+
+        return $locale;
     }
 
     /**
@@ -183,26 +177,17 @@ class LocaleManager {
      */
     public function get()
     {
-        return $this->app->getLocale();
+        return app()->getLocale();
     }
 
     /**
-     * Guess the locale and set it
+     * Guess the locale and set it.
      *
+     * @param  bool $save
      * @return string
      */
     public function setGuessed($save = false)
     {
-        return $this->set($this->guess(), $save);
-    }
-
-    /**
-     * Return the cookie key.
-     *
-     * @return string
-     */
-    public function getCookieKey()
-    {
-        return $this->cookieKey;
+        return $this->set($this->guess(true), $save);
     }
 }

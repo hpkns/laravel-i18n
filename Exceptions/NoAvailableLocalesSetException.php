@@ -1,3 +1,8 @@
-<?php namespace Kowali\I18n\Locales\Exceptions;
+<?php
 
-class NoAvailableLocalesSetException extends \Exception {}
+namespace Hpkns\I18n\Exceptions;
+
+class NoAvailableLocalesSetException extends \Exception
+{
+    //
+}

@@ -1,44 +1,29 @@
-<?php namespace Kowali\I18n;
+<?php
+
+namespace Hpkns\I18n;
 
 use Illuminate\Support\ServiceProvider;
 
-use Kowali\Formatting\Parser;
-use Kowali\Formatting\Parsers\MarkdownParser;
-
-class I18nServiceProvider extends ServiceProvider {
-
+class I18nServiceProvider extends ServiceProvider
+{
     /**
-     * Indicates if loading of the provider is deferred.
-     *
-     * @var bool
-     */
-    protected $defer = false;
-
-    /**
-     * Boot the service provider
-     *
-     * @return void
+     * Bootstrap the application services.
      */
     public function boot()
     {
-
+        //
     }
 
     /**
-     *
-     * @return void
+     * Register the application services.
      */
-    public function register (){
-
-        $this->app->bind('kowali.locale', function($app){
-
-            $locales = $app->config->get('app.locales', (array)$app->config->get('app.locale'));
-            $cookie_key = $app->config->get('app.locale-cookie-key', 'locale');
-
-            return new LocaleManager($locales, $cookie_key, $app['request'], $app);
-
+    public function register()
+    {
+        $this->app->singleton('locale', function ($app) {
+            $available = config('app.locales', [config('app.locale')]);
+            $cookie_key = config('app.local-cookie-key', 'locale');
+            return new LocaleManager($available, $cookie_key);
         });
-
     }
 
     /**
@@ -48,8 +33,6 @@ class I18nServiceProvider extends ServiceProvider {
      */
     public function provides()
     {
-        return ['kowali.locale'];
+        return ['locale'];
     }
 }
-
-
