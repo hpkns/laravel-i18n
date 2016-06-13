@@ -11,7 +11,7 @@ if (!function_exists('alternate')) {
     function alternate(array $replace = [])
     {
         $route = Route::currentRouteName();
-        $query = array_merge(Input::query(), $replace);
+        $query = array_merge(app('request')->query(), $replace);
 
         return route($route, $query);
     }
