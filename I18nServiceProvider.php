@@ -24,6 +24,8 @@ class I18nServiceProvider extends ServiceProvider
             $cookie_key = config('app.local-cookie-key', 'locale');
             return new LocaleManager($available, $cookie_key);
         });
+
+        $this->app->alias('locale', LocaleManager::class);
     }
 
     /**
