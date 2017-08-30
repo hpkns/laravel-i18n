@@ -56,7 +56,11 @@ class LocaleManager
             return $locale;
         }
 
-        return $this->pickFromAccepted($this->available, $this->getHeaderAcceptedLocales(), $must_return_value);
+        try {
+            return $this->pickFromAccepted($this->available, $this->getHeaderAcceptedLocales(), $must_return_value);
+        } catch (Exceptions\EmptyAcceptHeader $e) {
+            return reset($this->available);
+        }
     }
 
     /**
